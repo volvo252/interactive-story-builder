@@ -42,11 +42,35 @@ export default function EditorPage() {
     });
   }
 
+  function updateChoice(sceneId: string, choiceId: string, value: string) {
+    setStory({                                                                              
+      ...story,                                                                               
+      scenes: story.scenes.map((scene) => {                                                   
+        if (scene.id === sceneId) {    
+          return{
+            ...scene,                                                                                                                                
+            choices: scene.choices.map((choice) => {   
+              if (choice.id === choiceId) {
+                return {
+                  ...choice,
+                  text: value,
+                };
+              }
+
+              return choice;
+            }),
+          };
+        }
+
+        return scene;                                                                           
+      }),
+    });
+  }
 
   function addChoice (sceneId: string){
     const newChoice: Choice ={
       id: crypto.randomUUID(),
-      text: '123',
+      text: 'Choice',
       targetSceneId: null,
     };
     
@@ -64,11 +88,26 @@ export default function EditorPage() {
     });
   }
 
-
   function deleteScene(sceneId: string) {
     setStory({
       ...story,
       scenes: story.scenes.filter((scene) => scene.id !== sceneId),
+    });
+  }
+
+  function deleteChoice(sceneId: string, choiceId: string) {
+    setStory({
+      ...story,
+      scenes: story.scenes.map((scene) =>{
+        if(scene.id === sceneId){
+          
+          return {
+            ...scene,
+            choices: scene.choices.filter((choice) => choice.id !== choiceId),
+          }
+        }
+        return scene;
+      }),
     });
   }
 
@@ -128,8 +167,23 @@ export default function EditorPage() {
             </button>
             {
              scene.choices.map((choice) =>(
-              <div key = {choice.id } className="border rounded p-1">
-                {choice.text} 
+              <div key = {choice.id} className="border rounded p-1">
+                
+              <textarea              
+                value={choice.text}
+                onChange={(event) =>
+                  updateChoice(
+                    scene.id,
+                    choice.id,
+                    event.target.value
+                )
+              }/>
+              <button
+                onClick={() => deleteChoice(scene.id, choice.id)}
+                className="mt-3 bg-red-600 text-white px-3 py-1 rounded"
+              >
+                Delete choice
+              </button>
               </div>            
              ))
             }
