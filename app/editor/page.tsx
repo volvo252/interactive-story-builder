@@ -1,8 +1,7 @@
 'use client';           
 
 import { useState } from 'react';
-import type { Story, Scene } from '@/lib/types';
-import { Choice } from '../lib/types';
+import type { Story, Scene, Choice } from '@/lib/types';
 
 export default function EditorPage() {
   const [sceneCounter, setSceneCounter] = useState(1);
@@ -19,18 +18,19 @@ export default function EditorPage() {
       content: '',
       choices: [],
     };
-    setStory({                                     
-      ...story,                                      
-      scenes: [...story.scenes, newScene],
-    });
+    setStory((currentStory) => ({                                     
+      ...currentStory,                                      
+      scenes: [...currentStory.scenes, newScene],
+    }));
 
-    setSceneCounter(sceneCounter + 1);
+    setSceneCounter((currentCounter) => currentCounter + 1);
   }
 
+
   function updateScene(sceneId: string, field: 'title'|'content', value:string) {
-    setStory({                                                                              
-      ...story,                                                                               
-      scenes: story.scenes.map((scene) => {                                                   
+    setStory((currentStory) => ({                                                                              
+      ...currentStory,                                                                               
+      scenes: currentStory.scenes.map((scene) => {                                                   
         if (scene.id === sceneId) {                                                            
           return {                                                                             
             ...scene,                                                                          
@@ -39,13 +39,13 @@ export default function EditorPage() {
         }
         return scene;                                                                           
       }),
-    });
+    }));
   }
 
   function updateChoice(sceneId: string, choiceId: string, value: string) {
-    setStory({                                                                              
-      ...story,                                                                               
-      scenes: story.scenes.map((scene) => {                                                   
+    setStory((currentStory) => ({                                                                              
+      ...currentStory,                                                                               
+      scenes: currentStory.scenes.map((scene) => {                                                   
         if (scene.id === sceneId) {    
           return{
             ...scene,                                                                                                                                
@@ -64,7 +64,32 @@ export default function EditorPage() {
 
         return scene;                                                                           
       }),
-    });
+    }));
+  }
+
+  function updateChoiceTarget(sceneId: string, choiceId: string, targetSceneId: string | null) {
+    setStory((currentStory) => ({                                                                              
+      ...currentStory,                                                                               
+      scenes: currentStory.scenes.map((scene) => {                                                   
+        if (scene.id === sceneId) {    
+          return{
+            ...scene,                                                                                                                                
+            choices: scene.choices.map((choice) => {   
+              if (choice.id === choiceId) {
+                return {
+                  ...choice,
+                  targetSceneId,
+                };
+              }
+
+              return choice;
+            }),
+          };
+        }
+
+        return scene;                                                                           
+      }),
+    }));
   }
 
   function addChoice (sceneId: string){
@@ -74,9 +99,9 @@ export default function EditorPage() {
       targetSceneId: null,
     };
     
-    setStory({
-      ...story,
-      scenes: story.scenes.map((scene) =>{
+    setStory((currentStory) =>({
+      ...currentStory,
+      scenes: currentStory.scenes.map((scene) =>{
         if (scene.id === sceneId){
           return {
             ...scene,
@@ -85,20 +110,20 @@ export default function EditorPage() {
         }
         return scene;
       }),
-    });
+    }));
   }
 
   function deleteScene(sceneId: string) {
-    setStory({
-      ...story,
-      scenes: story.scenes.filter((scene) => scene.id !== sceneId),
-    });
+    setStory((currentStory) => ({
+      ...currentStory,
+      scenes: currentStory.scenes.filter((scene) => scene.id !== sceneId),
+    }));
   }
 
   function deleteChoice(sceneId: string, choiceId: string) {
-    setStory({
-      ...story,
-      scenes: story.scenes.map((scene) =>{
+    setStory((currentStory) => ({
+      ...currentStory,
+      scenes: currentStory.scenes.map((scene) =>{
         if(scene.id === sceneId){
           
           return {
@@ -108,7 +133,7 @@ export default function EditorPage() {
         }
         return scene;
       }),
-    });
+    }));
   }
 
   return (
@@ -163,7 +188,7 @@ export default function EditorPage() {
               onClick={() => addChoice(scene.id)}
               className="mt-3 bg-green-600 text-white px-3 py-1 rounded"
             >
-              add Choise
+              Add choise
             </button>
             {
              scene.choices.map((choice) =>(
@@ -178,6 +203,25 @@ export default function EditorPage() {
                     event.target.value
                 )
               }/>
+              <select
+                value={choice.targetSceneId ?? ''}
+                onChange={(event) =>
+                  updateChoiceTarget(
+                    scene.id,
+                    choice.id,
+                    event.target.value || null
+                  )
+                }
+              >
+                <option value="">No target scene</option>
+
+                {story.scenes.map((targetScene) => (
+                  <option key={targetScene.id} value={targetScene.id}>
+                    {targetScene.title}
+                  </option>
+                ))}
+              </select>
+
               <button
                 onClick={() => deleteChoice(scene.id, choice.id)}
                 className="mt-3 bg-red-600 text-white px-3 py-1 rounded"
