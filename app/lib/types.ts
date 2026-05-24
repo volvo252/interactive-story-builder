@@ -2,6 +2,7 @@ export type Story = {
   id: string;
   title: string;
   scenes: Scene[];
+  startSceneId: string | null;
 };
 
 export type Scene = {

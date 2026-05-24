@@ -4,11 +4,14 @@ import { useState } from 'react';
 import type { Story, Scene, Choice } from '@/lib/types';
 
 export default function EditorPage() {
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [sceneCounter, setSceneCounter] = useState(1);
   const [story, setStory] = useState<Story>({
     id: crypto.randomUUID(),
     title: 'My first story',
     scenes: [],
+    startSceneId: null,
   });
 
   function addScene() {
@@ -19,13 +22,23 @@ export default function EditorPage() {
       choices: [],
     };
     setStory((currentStory) => ({                                     
-      ...currentStory,                                      
+      ...currentStory,   
+      startSceneId: currentStory.startSceneId ?? newScene.id,                                   
       scenes: [...currentStory.scenes, newScene],
     }));
 
     setSceneCounter((currentCounter) => currentCounter + 1);
   }
+  
+  function startPreview() {
+    setIsPreviewMode(true);
+    setCurrentSceneId(story.startSceneId);
+  }
 
+  function exitPreview() {
+    setIsPreviewMode(false);
+    setCurrentSceneId(null);
+  }
 
   function updateScene(sceneId: string, field: 'title'|'content', value:string) {
     setStory((currentStory) => ({                                                                              
@@ -136,7 +149,51 @@ export default function EditorPage() {
     }));
   }
 
-  return (
+  function changeCurrentSceneId (sceneId : string | null) {
+    setCurrentSceneId(sceneId);
+  }
+
+  const currentScene =
+    story.scenes.find((scene) => scene.id === currentSceneId) ?? null;
+
+  if (isPreviewMode) {
+      return (
+        <main className="p-8">
+          <h1 className="text-3xl font-bold mb-6">Story Preview</h1>
+
+          <button
+            onClick={exitPreview}
+            className="bg-gray-600 text-white px-4 py-2 rounded"
+          >
+            Back to editor
+          </button>
+
+          {currentScene ? (
+            <div className="mt-6 border rounded p-4">
+              <h2 className="text-xl font-semibold">{currentScene.title}</h2>
+              <p className="mt-4">{currentScene.content}</p>
+                 {currentScene.choices.map((choice) => (
+                    <button 
+                      key = {choice.id}
+                      onClick={() => changeCurrentSceneId(choice.targetSceneId)}  
+                      disabled={choice.targetSceneId === null}     
+                      className="bg-gray-600 text-white px-4 py-2 rounded"
+                    >
+                      {choice.text}
+                    </button>    
+                  ))}                              
+                {currentScene.choices.length === 0 && (
+                  <p className="mt-4 font-semibold">The End</p>
+                )}
+             </div>
+
+          ) : (
+            <p className="mt-6">Start scene not found.</p>
+          )}
+        </main>
+      );
+    }
+    return (
     <main className="p-8">
       <h1 className="text-3xl font-bold mb-6">Story Editor</h1>
 
@@ -147,6 +204,12 @@ export default function EditorPage() {
         Add scene
       </button>
 
+      <button
+        onClick={startPreview}
+        className="ml-3 bg-blue-600 text-white px-4 py-2 rounded"
+      >
+        Preview
+      </button>
 
       <div className="mt-6 space-y-4">
         {story.scenes.map((scene) => (
@@ -184,7 +247,7 @@ export default function EditorPage() {
             >
               Delete scene
             </button>
-                        <button
+            <button
               onClick={() => addChoice(scene.id)}
               className="mt-3 bg-green-600 text-white px-3 py-1 rounded"
             >
@@ -234,6 +297,9 @@ export default function EditorPage() {
           </div>
         ))}
       </div>
+      <pre className="mt-8 text-xs">
+        {JSON.stringify(story, null, 2)}
+      </pre>
     </main>
   );
 }
