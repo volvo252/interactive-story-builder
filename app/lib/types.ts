@@ -16,4 +16,14 @@ export type Choice = {
   id: string;
   text: string;
   targetSceneId: string | null;
+  availability: ChoiceAvailability;
 };
+
+export type ChoiceAvailability =
+  | {
+      type: 'always';
+    }
+  | {
+      type: 'after_choice';
+      requiredChoiceId: string;
+    };

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import type { Story, Scene, Choice } from '@/lib/types';
+import type { Story, Scene, Choice, ChoiceAvailability} from '@/app/lib/types';
+import { isChoiceAvailable } from '@/app/lib/story/choiceAvailability';
 
 export default function EditorPage() {
   const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -131,11 +132,16 @@ export default function EditorPage() {
     }));
   }
 
+
+
   function addChoice(sceneId: string) {
     const newChoice: Choice = {
       id: crypto.randomUUID(),
       text: 'Choice',
       targetSceneId: null,
+      availability: {
+        type: 'always',
+      },
     };
 
     setStory((currentStory) => ({
@@ -170,6 +176,31 @@ export default function EditorPage() {
             choices: scene.choices.filter((choice) => choice.id !== choiceId),
           }
         }
+        return scene;
+      }),
+    }));
+  }
+
+  function updateChoiceAvailability(sceneId: string, choiceId: string, availability: ChoiceAvailability) {
+    setStory((currentStory) => ({
+      ...currentStory,
+      scenes: currentStory.scenes.map((scene) => {
+        if (scene.id === sceneId) {
+          return {
+            ...scene,
+            choices: scene.choices.map((choice) => {
+              if (choice.id === choiceId) {
+                return {
+                  ...choice,
+                  availability,
+                };
+              }
+
+              return choice;
+            }),
+          };
+        }
+
         return scene;
       }),
     }));
@@ -219,7 +250,11 @@ export default function EditorPage() {
           <div className="mt-4 flex flex-col items-start gap-2">
             <h2 className="text-xl font-semibold">{currentScene.title}</h2>
             <p className="mt-4">{currentScene.content}</p>
-            {currentScene.choices.map((choice) => (
+            {currentScene.choices
+              .filter((choice) => {
+                return isChoiceAvailable(choice, selectedChoiceIds);
+              })
+              .map((choice) => (
               <button
                 key={choice.id}
                 onClick={() => selectChoice(choice.targetSceneId, choice.id)}
@@ -324,6 +359,7 @@ export default function EditorPage() {
                         event.target.value
                       )
                     } />
+                    Ведёт в:
                   <select
                     value={choice.targetSceneId ?? ''}
                     onChange={(event) =>
@@ -343,6 +379,61 @@ export default function EditorPage() {
                     ))}
                   </select>
 
+                  <label className="block mt-2">
+                    <input
+                      type="checkbox"
+                      checked={choice.availability.type === 'after_choice'}
+                      onChange={(event) => {
+                        if (event.target.checked) {
+                          updateChoiceAvailability(
+                            scene.id,
+                            choice.id,
+                            {
+                              type: 'after_choice',
+                              requiredChoiceId: '',
+                            }
+                          );
+                        } else {
+                          updateChoiceAvailability(
+                            scene.id,
+                            choice.id,
+                            {
+                              type: 'always',
+                            }
+                          );
+                        }
+                      }}
+                    />
+
+                    Show only after previous choice
+                  </label>
+                  
+                  {choice.availability.type === 'after_choice' && (
+                    <label className="block mt-2">
+                      Требуется:
+                      <select
+                        value={choice.availability.requiredChoiceId}
+                        onChange={(event) =>
+                          updateChoiceAvailability(scene.id, choice.id, {
+                            type: 'after_choice',
+                            requiredChoiceId: event.target.value,
+                          })
+                        }
+                      >
+                      <option value="">No required choice</option>
+
+                      {story.scenes
+                        .filter((sourceScene) => sourceScene.id !== scene.id)
+                        .map((sourceScene) =>
+                          sourceScene.choices.map((targetChoice) => (
+                            <option key={targetChoice.id} value={targetChoice.id}>
+                              {sourceScene.title}: {targetChoice.text}
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </label>
+                  )}
                   <button
                     onClick={() => deleteChoice(scene.id, choice.id)}
                     className="mt-3 bg-red-600 text-white px-3 py-1 rounded"
