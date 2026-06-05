@@ -17,6 +17,8 @@ export type Choice = {
   text: string;
   targetSceneId: string | null;
   availability: ChoiceAvailability;
+  // decision is a real reader choice; continuation is a future "Next" transition.
+  kind: 'decision' | 'continuation';
 };
 
 export type ChoiceAvailability =
