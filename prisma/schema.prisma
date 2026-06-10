@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Story {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  startSceneId String? @db.Uuid
+  startScene   Scene?  @relation("StoryStartScene", fields: [startSceneId], references: [id], onDelete: SetNull)
+
+  scenes Scene[]
+}
+
+model Scene {
+  id              String   @id @default(uuid()) @db.Uuid
+  storyId         String   @db.Uuid
+  story           Story    @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  title           String
+  content         String   @default("")
+  sortOrder       Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  outgoingChoices Choice[] @relation("ChoiceSource")
+  incomingChoices Choice[] @relation("ChoiceTarget")
+  startedByStories Story[] @relation("StoryStartScene")
+}
+
+enum ChoiceAvailabilityType {
+  always
+  after_choice
+}
+
+enum ChoiceKind {
+  decision
+  continuation
+}
+
+model Choice {
+  id               String                 @id @default(uuid()) @db.Uuid
+  sceneId          String                 @db.Uuid
+  scene            Scene                  @relation("ChoiceSource", fields: [sceneId], references: [id], onDelete: Cascade)
+  targetSceneId    String?                @db.Uuid
+  targetScene      Scene?                 @relation("ChoiceTarget", fields: [targetSceneId], references: [id], onDelete: SetNull)
+  availabilityType ChoiceAvailabilityType @default(always)
+  requiredChoiceId String?                @db.Uuid
+  requiredChoice   Choice?                @relation("ChoiceRequirement", fields: [requiredChoiceId], references: [id], onDelete: SetNull)
+  unlockedChoices  Choice[]               @relation("ChoiceRequirement")
+  text             String
+  kind             ChoiceKind             @default(decision)
+  sortOrder        Int                    @default(0)
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+}

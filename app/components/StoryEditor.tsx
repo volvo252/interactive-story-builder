@@ -7,6 +7,9 @@ type StoryEditorProps = {
     validationIssues: ValidationIssue[];
     onAddScene: () => void;
     onStartPreview: () => void;
+    onSave: () => void;
+    isSaving: boolean;
+    saveMessage: string | null;
     onUpdateScene: (
         sceneId: string,
         field: 'title' | 'content',
@@ -44,7 +47,17 @@ export default function StoryEditor(props: StoryEditorProps) {
             >
                 Add scene
             </button>
+            <button
+                onClick={props.onSave}
+                disabled={props.isSaving}
+                className="ml-3 bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50"
+            >
+                {props.isSaving ? 'Saving...' : 'Save'}
+            </button>
 
+            {props.saveMessage && (
+                <p className="mt-3">{props.saveMessage}</p>
+            )}
             <button
                 onClick={props.onStartPreview}
                 className="ml-3 bg-blue-600 text-white px-4 py-2 rounded"
@@ -100,6 +113,11 @@ export default function StoryEditor(props: StoryEditorProps) {
                         >
                             Make start
                         </button>
+                        {scene.id === props.story.startSceneId && (
+                            <span className="ml-3 text-sm font-semibold text-yellow-600">
+                                ★ Start scene
+                            </span>
+                        )}
                         {
                             scene.choices.map((choice) => (
                                 <div key={choice.id} className="border rounded p-1">
