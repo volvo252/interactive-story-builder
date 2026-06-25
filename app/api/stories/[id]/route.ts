@@ -18,23 +18,35 @@ export async function GET(
       { status: 400 }
     );
   }
-  const story = await loadStory(id);
 
-  if (story === null) {
+  try {
+    const story = await loadStory(id);
+
+    if (story === null) {
+      return Response.json(
+        {
+          error: {
+            message: 'Story not found',
+          },
+        },
+        { status: 404 }
+      );
+    }
+
+    return Response.json(
+      {
+        data: story,
+      },
+      { status: 200 }
+    );
+  } catch {
     return Response.json(
       {
         error: {
-          message: 'Story not found',
+          message: 'Internal server error',
         },
       },
-      { status: 404 }
+      { status: 500 }
     );
   }
-
-  return Response.json(
-    {
-      data: story,
-    },
-    { status: 200 }
-  );
 }
