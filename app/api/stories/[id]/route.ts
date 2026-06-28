@@ -1,4 +1,4 @@
-import { loadStory, saveStory } from '@/app/editor/actions';
+import { deleteStory, loadStory, saveStory } from '@/app/editor/actions';
 import type { Story } from '@/app/lib/types';
 
 export async function GET(
@@ -164,6 +164,69 @@ export async function PATCH(
         data: story,
       },
       { status: 200 }
+    );
+  } catch {
+    return Response.json(
+      {
+        error: {
+          message: 'Internal server error',
+        },
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  context: RouteContext<'/api/stories/[id]'>
+) {
+  const { id } = await context.params;
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidPattern.test(id)) {
+    return Response.json(
+      {
+        error: {
+          message: 'Invalid story id',
+        },
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const existingStory = await loadStory(id);
+    if (!existingStory) {
+      return Response.json(
+        {
+          error: {
+            message: 'Story not found',
+          },
+        },
+        { status: 404 }
+      );
+    }
+    const result = await deleteStory(id);
+
+    if (result.success) {
+      return Response.json(
+        {
+          data: {
+            message: 'Story deleted',
+          },
+        },
+        { status: 200 }
+      );
+    }
+
+    return Response.json(
+      {
+        error: {
+          message: result.message,
+        },
+      },
+      { status: 400 }
     );
   } catch {
     return Response.json(

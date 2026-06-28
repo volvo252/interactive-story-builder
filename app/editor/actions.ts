@@ -184,3 +184,14 @@ export async function loadStory(id: string): Promise<Story | null> {
     })),
   };
 }
+
+export async function deleteStory(id: string) {
+  await prisma.story.delete({
+    where: { id },
+  });
+
+  return {
+    success: true,
+    message: 'Story deleted.',
+  };
+}
