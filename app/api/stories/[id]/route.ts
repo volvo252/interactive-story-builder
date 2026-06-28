@@ -1,7 +1,6 @@
 import { jsonError, jsonData } from '@/app/api/_utils/responses';
-import { isUuid } from '@/app/api/_utils/validation';
+import { isUuid, validateStoryPayload } from '@/app/api/_utils/validation';
 import { deleteStory, loadStory, saveStory } from '@/app/editor/actions';
-import type { Story } from '@/app/lib/types';
 
 export async function GET(
   _request: Request,
@@ -34,34 +33,19 @@ export async function PATCH(
     return jsonError('Invalid story id', 400);
   }
 
-  let story: Story;
+  let storyPayload: unknown;
   try {
-    story = (await request.json()) as Story;
+    storyPayload = await request.json();
   } catch {
     return jsonError('Invalid JSON body', 400);
   }
 
-  if (
-    typeof story !== 'object' ||
-    story === null ||
-    !('title' in story) ||
-    typeof story.title !== 'string'
-  ) {
-    return jsonError('Story title is required', 400);
+  const validation = validateStoryPayload(storyPayload, id);
+  if (!validation.success) {
+    return jsonError(validation.message, 400);
   }
 
-  if (!('id' in story) || typeof story.id !== 'string' || !isUuid(story.id) || story.id !== id) {
-    return jsonError('Invalid story id', 400);
-  }
-
-
-  if (story.title.trim() === '') {
-    return jsonError('Story title is required', 400);
-  }
-
-  if (!('scenes' in story) || !Array.isArray(story.scenes)) {
-    return jsonError('Story scenes are required', 400);
-  }
+  const story = validation.story;
 
   try {
     const existingStory = await loadStory(id);
