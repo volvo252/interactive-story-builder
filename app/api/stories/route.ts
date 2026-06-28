@@ -1,5 +1,6 @@
 
 import { jsonData, jsonError } from '@/app/api/_utils/responses';
+import { isUuid } from '@/app/api/_utils/validation';
 import { loadStory, saveStory } from '@/app/editor/actions';
 import type { Story } from '@/app/lib/types';
 
@@ -16,8 +17,7 @@ export async function POST(request: Request) {
         return jsonError('Story title is required', 400);
     }
 
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!('id' in story) || typeof story.id !== 'string' || !uuidPattern.test(story.id)) {
+    if (!('id' in story) || typeof story.id !== 'string' || !isUuid(story.id)) {
         return jsonError('Invalid story id', 400);
     }
 

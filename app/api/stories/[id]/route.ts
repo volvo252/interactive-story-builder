@@ -1,4 +1,5 @@
 import { jsonError, jsonData } from '@/app/api/_utils/responses';
+import { isUuid } from '@/app/api/_utils/validation';
 import { deleteStory, loadStory, saveStory } from '@/app/editor/actions';
 import type { Story } from '@/app/lib/types';
 
@@ -7,10 +8,7 @@ export async function GET(
   context: RouteContext<'/api/stories/[id]'>
 ) {
   const { id } = await context.params;
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-  if (!uuidPattern.test(id)) {
+  if (!isUuid(id)) {
     return jsonError('Invalid story id', 400);
   }
 
@@ -32,9 +30,7 @@ export async function PATCH(
   context: RouteContext<'/api/stories/[id]'>
 ) {
   const { id } = await context.params;
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidPattern.test(id)) {
+  if (!isUuid(id)) {
     return jsonError('Invalid story id', 400);
   }
 
@@ -54,7 +50,7 @@ export async function PATCH(
     return jsonError('Story title is required', 400);
   }
 
-  if (!('id' in story) || typeof story.id !== 'string' || !uuidPattern.test(story.id) || story.id !== id) {
+  if (!('id' in story) || typeof story.id !== 'string' || !isUuid(story.id) || story.id !== id) {
     return jsonError('Invalid story id', 400);
   }
 
@@ -89,9 +85,7 @@ export async function DELETE(
   context: RouteContext<'/api/stories/[id]'>
 ) {
   const { id } = await context.params;
-  const uuidPattern =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidPattern.test(id)) {
+  if (!isUuid(id)) {
     return jsonError('Invalid story id', 400);
   }
 
